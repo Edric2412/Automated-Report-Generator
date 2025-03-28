@@ -37,11 +37,11 @@ Follow these steps to set up the project:
 ## 🚀 Usage
 1. **Run the application:**
    ```sh
-   python backend/main.py
+   uvicorn backend.main:app --reload
    ```
 2. **Open the web interface** in your browser:
    ```
-   http://localhost:5000
+   http://127.0.0.1:8000
    ```
 3. **Upload your data** and generate reports based on available templates.
 4. **Preview and download** the final report.
