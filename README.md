@@ -10,7 +10,7 @@ The **Automated Report Generator** is a streamlined tool that automates the proc
 - **User-Friendly Interface:** Simple and intuitive interface for easy navigation.
 - **Custom Templates:** Supports various templates for different report types.
 - **Document Preview:** View the generated report before exporting.
-- **Multi-Format Support:** Export reports in DOCX, PDF, and other formats.
+- **Multi-Format Support:** Export reports in DOCX format.
 - **Secure & Efficient:** Ensures data integrity and quick processing.
 
 ## 🛠 Installation
