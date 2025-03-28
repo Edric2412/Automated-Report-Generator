@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-docx
+python-multipart
+jinja2
+docx2pdf
+bs4
+Pillow
+python-docx-template
+python-docx2pdf

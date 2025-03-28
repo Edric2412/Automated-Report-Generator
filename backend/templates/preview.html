@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=8.5in, initial-scale=1.0">
+  <title>Report Preview</title>
+  <style>
+    /* Container to simulate a printed page */
+    .page {
+      width: 8.5in;
+      min-height: 11in;
+      margin: 0 auto 20px auto;
+      padding: 0.5in;
+      box-sizing: border-box;
+      background: white;
+      border: 1px solid #ccc;
+      position: relative;
+    }
+    body {
+      background: #ddd;
+      padding: 20px;
+    }
+    .event-header {
+      text-align: center;
+      font-size: 24pt;
+      margin-bottom: 20pt;
+      color: rgb(0, 112, 192);
+      font-weight: bold;
+    }
+    .section-title {
+      font-size: 18pt;
+      color: rgb(0, 112, 192);
+      margin: 20pt 0 10pt;
+      border-bottom: 2px solid rgb(0, 112, 192);
+      padding-bottom: 4pt;
+    }
+    .details-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 15pt 0;
+      font-size: 11pt;
+      border: 1px solid #cccccc;
+    }
+    .details-table td {
+      padding: 8px;
+      border: 1px solid #cccccc;
+      vertical-align: top;
+    }
+    .detail-label {
+      font-weight: bold;
+      width: 25%;
+      background-color: #f8f8f8;
+    }
+    .content-section {
+      margin: 15pt 0;
+      font-size: 11pt;
+      line-height: 1.5;
+    }
+    /* Image placeholder styles */
+    .image-placeholder {
+      border: 2px dashed #aaa;
+      background-color: #f5f5f5;
+      text-align: center;
+      padding: 30px;
+      margin: 15px 0;
+      color: #666;
+      font-style: italic;
+      max-width: 100%;
+      box-sizing: border-box;
+      /* Make images maintain aspect ratio */
+      object-fit: contain;
+      position: relative;
+    }
+    .image-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin: 15px 0;
+      width: 100%;
+    }
+    /* For single image - use full width */
+    .image-grid.single .image-placeholder {
+      width: 100%;
+      max-height: 70vh;
+      margin: 0 0 20px 0;
+    }
+    /* For two images - stack them vertically by default */
+    .image-grid.two-images .image-placeholder {
+      width: 100%;
+      margin: 10px 0;
+      max-height: 45vh;
+    }
+    /* For two landscape images - place side by side */
+    .image-grid.two-images.landscape-dominant .image-placeholder {
+      width: calc(50% - 10px);
+      margin: 5px;
+      max-height: 40vh;
+    }
+    /* For three or more images - create a responsive grid */
+    .image-grid.multi-images {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+    }
+    .image-grid.multi-images .image-placeholder {
+      width: calc(50% - 10px);
+      margin: 5px;
+      max-height: 40vh;
+    }
+    /* For portrait-dominant multi-images */
+    .image-grid.multi-images.portrait-dominant .image-placeholder {
+      width: calc(33.333% - 10px);
+      margin: 5px;
+      max-height: 50vh;
+    }
+    
+    /* Special case for exactly three portrait images */
+    .image-grid.multi-images.portrait-dominant:has(.image-placeholder:nth-child(3):last-child) {
+      justify-content: space-around;
+    }
+    
+    .image-grid.multi-images.portrait-dominant:has(.image-placeholder:nth-child(3):last-child) .image-placeholder {
+      width: 30%;
+      margin: 5px;
+      max-height: 60vh;
+      object-fit: cover;
+    }
+    /* For landscape-dominant multi-images */
+    .image-grid.multi-images.landscape-dominant .image-placeholder {
+      width: calc(50% - 10px);
+      margin: 5px;
+      max-height: 35vh;
+    }
+    /* For very many images (more than 6) */
+    .image-grid.many-images .image-placeholder {
+      width: calc(33.333% - 10px);
+      margin: 5px;
+      max-height: 30vh;
+    }
+    /* For portrait-dominant many-images */
+    .image-grid.many-images.portrait-dominant .image-placeholder {
+      width: calc(25% - 10px);
+      margin: 5px;
+      max-height: 40vh;
+    }
+    /* The signature section at the bottom of the last page */
+    .signatures-section {
+      margin-top: 100px;
+    }
+    .signatures-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+    }
+    .signature-block {
+      width: 45%;
+      text-align: center;
+    }
+    .signature-line {
+      border-bottom: 1px solid #000;
+      margin: 50px 0 10px 0;
+    }
+    /* For print, enforce page breaks after each page */
+    @media print {
+      .page {
+        page-break-after: always;
+      }
+      .last-page {
+        page-break-after: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Page 1: Event Details -->
+  <div class="page" id="page1">
+    <div class="event-header">{{ report.eventType|upper }} REPORT</div>
+    <div class="section-title">Event Details</div>
+    <table class="details-table">
+      <tr>
+        <td class="detail-label">Department</td>
+        <td>{{ report.department }}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Topic</td>
+        <td>{{ report.topic }}</td>
+      </tr>
+      {% if report.expertName and report.expertName != "N/A" and report.eventType|lower != 'field visit' %}
+      <tr>
+        <td class="detail-label">Expert Name</td>
+        <td>{{ report.expertName }}</td>
+      </tr>
+      {% endif %}
+      <tr>
+        <td class="detail-label">Venue</td>
+        <td>{{ report.venue }}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Event Date/Time</td>
+        <td>{{ report.dateTime }}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Faculty Coordinator</td>
+        <td>{{ report.coordinator }}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">Participants</td>
+        <td>{{ report.participants }}</td>
+      </tr>
+      <tr>
+        <td class="detail-label">HOD Name</td>
+        <td>{{ report.hodName }}</td>
+      </tr>
+    </table>
+  </div>
+  
+  <!-- Page 2: Summary -->
+  <div class="page" id="page2">
+    <div class="section-title">Summary</div>
+    <div class="content-section">{{ report.summary|safe }}</div>
+  </div>
+  
+  <!-- Page 3: Outcome -->
+  <div class="page" id="page3">
+    <div class="section-title">Outcome</div>
+    <div class="content-section">{{ report.outcome|safe }}</div>
+  </div>
+  
+  <!-- Page 4: Invite Poster -->
+  <div class="page" id="page4">
+    <div class="section-title">Invite Poster</div>
+    <div class="image-grid single">
+      <div class="image-placeholder">Invite Poster Image Will Appear Here</div>
+    </div>
+  </div>
+  
+  <!-- Page 5: Action Photos -->
+  <div class="page" id="page5">
+    <div class="section-title">Action Photos</div>
+    <div class="image-grid" id="actionPhotosGrid">
+      <div class="image-placeholder">Action Photo 1</div>
+      <div class="image-placeholder">Action Photo 2</div>
+      <div class="image-placeholder">Action Photo 3</div>
+      <div class="image-placeholder">Action Photo 4</div>
+    </div>
+  </div>
+  
+  <!-- Page 6: Attendance Sheet -->
+  <div class="page" id="page6">
+    <div class="section-title">Attendance Sheet</div>
+    <div class="image-grid single">
+      <div class="image-placeholder">Attendance Sheet Image Will Appear Here</div>
+    </div>
+  </div>
+  
+  <!-- Page 7: Analysis Report -->
+  <div class="page" id="page7">
+    <div class="section-title">Analysis Report</div>
+    <div class="image-grid single">
+      <div class="image-placeholder">Analysis Report Image Will Appear Here</div>
+    </div>
+  </div>
+  
+  <!-- Page 8: Signatures (on the last page) -->
+  <div class="page last-page" id="page8">
+    <div style="margin-top: 150px;"> <!-- Increased space before signatures -->
+      <div class="signatures-container">
+        <div class="signature-block">
+          <div class="signature-line"></div>
+          <p>{{ report.coordinator }}</p>
+        </div>
+        <div class="signature-block">
+          <div class="signature-line"></div>
+          <p>{{ report.hodName }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Function to set appropriate classes for image grids based on number of images and their aspect ratios
+    function setupImageGrids() {
+      // Get all image grid containers
+      const imageGrids = document.querySelectorAll('.image-grid');
+      
+      imageGrids.forEach(grid => {
+        // Skip grids that already have the 'single' class
+        if (grid.classList.contains('single')) return;
+        
+        const images = grid.querySelectorAll('.image-placeholder');
+        const count = images.length;
+        
+        // Remove any existing layout classes
+        grid.classList.remove('single', 'two-images', 'multi-images', 'many-images', 'portrait-dominant', 'landscape-dominant', 'three-portrait');
+        
+        // Apply appropriate class based on number of images
+        if (count === 1) {
+          grid.classList.add('single');
+        } else if (count === 2) {
+          grid.classList.add('two-images');
+          analyzeImageRatios(grid, images);
+        } else if (count === 3) {
+          // Special handling for exactly 3 images
+          grid.classList.add('multi-images');
+          // For action photos grid with 3 images, assume portrait orientation
+          if (grid.id === 'actionPhotosGrid') {
+            grid.classList.add('portrait-dominant');
+            grid.classList.add('three-portrait');
+            // Still analyze for proper data attributes
+            analyzeImageRatios(grid, images);
+          } else {
+            analyzeImageRatios(grid, images);
+          }
+        } else if (count > 3 && count <= 6) {
+          grid.classList.add('multi-images');
+          analyzeImageRatios(grid, images);
+        } else if (count > 6) {
+          grid.classList.add('many-images');
+          analyzeImageRatios(grid, images);
+        }
+      });
+    }
+    
+    // Function to analyze image ratios and apply appropriate layout classes
+    function analyzeImageRatios(grid, images) {
+      // Count portrait and landscape images
+      let portraitCount = 0;
+      let landscapeCount = 0;
+      
+      // For preview placeholders, we'll check if there are actual images inside
+      // or use a more accurate detection method
+      images.forEach(img => {
+        // Check if there's an actual image inside the placeholder
+        const actualImg = img.querySelector('img');
+        let isPortrait = false;
+        
+        if (actualImg && actualImg.complete) {
+          // Use actual image dimensions
+          isPortrait = actualImg.naturalHeight > actualImg.naturalWidth;
+        } else {
+          // For placeholders without images, use a better heuristic
+          // For demo purposes, we'll check if the element has a portrait class
+          // or use a more reliable method than random assignment
+          isPortrait = img.classList.contains('portrait') || 
+                      (grid.id === 'actionPhotosGrid' && images.length === 3);
+        }
+        
+        if (isPortrait) {
+          img.dataset.orientation = 'portrait';
+          if (!actualImg) img.textContent += ' (Portrait)';
+          portraitCount++;
+        } else {
+          img.dataset.orientation = 'landscape';
+          if (!actualImg) img.textContent += ' (Landscape)';
+          landscapeCount++;
+        }
+      });
+      
+      // Apply appropriate class based on dominant orientation
+      if (portraitCount > landscapeCount) {
+        grid.classList.add('portrait-dominant');
+      } else {
+        grid.classList.add('landscape-dominant');
+      }
+      
+      // Add a summary of the analysis to the grid
+      const summary = document.createElement('div');
+      summary.className = 'image-analysis-summary';
+      summary.style.fontSize = '12px';
+      summary.style.color = '#666';
+      summary.style.marginTop = '10px';
+      summary.style.textAlign = 'center';
+      summary.innerHTML = `Image analysis: ${portraitCount} portrait, ${landscapeCount} landscape images`;
+      
+      // Check if summary already exists
+      const existingSummary = grid.querySelector('.image-analysis-summary');
+      if (existingSummary) {
+        grid.replaceChild(summary, existingSummary);
+      } else {
+        grid.appendChild(summary);
+      }
+    }
+    
+    // Run setup when DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', setupImageGrids);
+    
+    // In a real implementation, we would also handle actual image uploads
+    // This would involve analyzing the actual dimensions of uploaded images
+    // For demonstration purposes, we're using placeholders with simulated orientations
+  </script>
+</body>
+</html>
+.signature-block:first-child {
+  text-align: left;
+}
+.signature-block:last-child {
+  text-align: right;
+}
