@@ -19,6 +19,7 @@
     body {
       background: #ddd;
       padding: 20px;
+      font-family: Arial, sans-serif;
     }
     .event-header {
       text-align: center;
@@ -56,20 +57,62 @@
       font-size: 11pt;
       line-height: 1.5;
     }
+    /* Image information header */
+    .image-info-header {
+      display: flex;
+      justify-content: space-between;
+      margin: 10px 0;
+      padding: 8px;
+      background-color: #f0f7ff;
+      border: 1px solid #d0e3ff;
+      border-radius: 4px;
+      font-size: 11pt;
+    }
+    .image-count {
+      font-weight: bold;
+      color: rgb(0, 112, 192);
+    }
+    .image-format, .image-size {
+      color: #555;
+    }
     /* Image placeholder styles */
     .image-placeholder {
       border: 2px dashed #aaa;
       background-color: #f5f5f5;
       text-align: center;
-      padding: 30px;
+      padding: 20px;
       margin: 15px 0;
       color: #666;
-      font-style: italic;
       max-width: 100%;
       box-sizing: border-box;
       /* Make images maintain aspect ratio */
       object-fit: contain;
       position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 200px;
+    }
+    .placeholder-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+    .placeholder-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: 0.7;
+    }
+    .placeholder-text {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+    .placeholder-details {
+      font-style: italic;
+      font-size: 11pt;
+      color: #888;
     }
     .image-grid {
       display: flex;
@@ -156,6 +199,12 @@
       width: 45%;
       text-align: center;
     }
+    .signature-block:first-child {
+      text-align: left;
+    }
+    .signature-block:last-child {
+      text-align: right;
+    }
     .signature-line {
       border-bottom: 1px solid #000;
       margin: 50px 0 10px 0;
@@ -172,7 +221,7 @@
   </style>
 </head>
 <body>
-  <!-- Page 1: Event Details -->
+  <!-- Page 1: Event Details, Summary and Outcome -->
   <div class="page" id="page1">
     <div class="event-header">{{ report.eventType|upper }} REPORT</div>
     <div class="section-title">Event Details</div>
@@ -200,78 +249,124 @@
         <td>{{ report.dateTime }}</td>
       </tr>
       <tr>
-        <td class="detail-label">Faculty Coordinator</td>
-        <td>{{ report.coordinator }}</td>
-      </tr>
-      <tr>
         <td class="detail-label">Participants</td>
         <td>{{ report.participants }}</td>
       </tr>
-      <tr>
-        <td class="detail-label">HOD Name</td>
-        <td>{{ report.hodName }}</td>
-      </tr>
     </table>
-  </div>
-  
-  <!-- Page 2: Summary -->
-  <div class="page" id="page2">
+    
     <div class="section-title">Summary</div>
     <div class="content-section">{{ report.summary|safe }}</div>
-  </div>
-  
-  <!-- Page 3: Outcome -->
-  <div class="page" id="page3">
+    
     <div class="section-title">Outcome</div>
     <div class="content-section">{{ report.outcome|safe }}</div>
   </div>
   
-  <!-- Page 4: Invite Poster -->
-  <div class="page" id="page4">
+  <!-- Page 2: Invite Poster -->
+  <div class="page" id="page2">
     <div class="section-title">Invite Poster</div>
+    <div class="image-info-header">
+      <span class="image-count">1 image</span>
+      <span class="image-format">Recommended format: JPG/PNG</span>
+      <span class="image-size">Recommended size: 1200x1800px (Portrait)</span>
+    </div>
     <div class="image-grid single">
-      <div class="image-placeholder">Invite Poster Image Will Appear Here</div>
+      <div class="image-placeholder">
+        <div class="placeholder-content">
+          <div class="placeholder-icon"><i class="placeholder-image-icon">📄</i></div>
+          <div class="placeholder-text">Invite Poster Image Will Appear Here</div>
+          <div class="placeholder-details">Single image layout - Full width display</div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <!-- Page 5: Action Photos -->
-  <div class="page" id="page5">
+  <!-- Page 3: Action Photos -->
+  <div class="page" id="page3">
     <div class="section-title">Action Photos</div>
+    <div class="image-info-header">
+      <span class="image-count">4 images</span>
+      <span class="image-format">Recommended format: JPG/PNG</span>
+      <span class="image-size">Recommended size: 1200x800px (Landscape) or 800x1200px (Portrait)</span>
+    </div>
     <div class="image-grid" id="actionPhotosGrid">
-      <div class="image-placeholder">Action Photo 1</div>
-      <div class="image-placeholder">Action Photo 2</div>
-      <div class="image-placeholder">Action Photo 3</div>
-      <div class="image-placeholder">Action Photo 4</div>
+      <div class="image-placeholder">
+        <div class="placeholder-content">
+          <div class="placeholder-icon"><i class="placeholder-image-icon">📷</i></div>
+          <div class="placeholder-text">Action Photo 1</div>
+          <div class="placeholder-details">Grid layout - Adaptive sizing based on orientation</div>
+        </div>
+      </div>
+      <div class="image-placeholder">
+        <div class="placeholder-content">
+          <div class="placeholder-icon"><i class="placeholder-image-icon">📷</i></div>
+          <div class="placeholder-text">Action Photo 2</div>
+          <div class="placeholder-details">Grid layout - Adaptive sizing based on orientation</div>
+        </div>
+      </div>
+      <div class="image-placeholder">
+        <div class="placeholder-content">
+          <div class="placeholder-icon"><i class="placeholder-image-icon">📷</i></div>
+          <div class="placeholder-text">Action Photo 3</div>
+          <div class="placeholder-details">Grid layout - Adaptive sizing based on orientation</div>
+        </div>
+      </div>
+      <div class="image-placeholder">
+        <div class="placeholder-content">
+          <div class="placeholder-icon"><i class="placeholder-image-icon">📷</i></div>
+          <div class="placeholder-text">Action Photo 4</div>
+          <div class="placeholder-details">Grid layout - Adaptive sizing based on orientation</div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <!-- Page 6: Attendance Sheet -->
-  <div class="page" id="page6">
+  <!-- Page 4: Attendance Sheet -->
+  <div class="page" id="page4">
     <div class="section-title">Attendance Sheet</div>
+    <div class="image-info-header">
+      <span class="image-count">1 image</span>
+      <span class="image-format">Recommended format: JPG/PNG/PDF</span>
+      <span class="image-size">Recommended size: 1200x1800px (Portrait)</span>
+    </div>
     <div class="image-grid single">
-      <div class="image-placeholder">Attendance Sheet Image Will Appear Here</div>
+      <div class="image-placeholder">
+        <div class="placeholder-content">
+          <div class="placeholder-icon"><i class="placeholder-image-icon">📋</i></div>
+          <div class="placeholder-text">Attendance Sheet Image Will Appear Here</div>
+          <div class="placeholder-details">Single image layout - Full width display</div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <!-- Page 7: Analysis Report -->
-  <div class="page" id="page7">
+  <!-- Page 5: Analysis Report with Signatures -->
+  <div class="page last-page" id="page5">
     <div class="section-title">Analysis Report</div>
-    <div class="image-grid single">
-      <div class="image-placeholder">Analysis Report Image Will Appear Here</div>
+    <div class="image-info-header">
+      <span class="image-count">1 image</span>
+      <span class="image-format">Recommended format: JPG/PNG/PDF</span>
+      <span class="image-size">Recommended size: 1200x1800px (Portrait)</span>
     </div>
-  </div>
-  
-  <!-- Page 8: Signatures (on the last page) -->
-  <div class="page last-page" id="page8">
-    <div style="margin-top: 150px;"> <!-- Increased space before signatures -->
+    <div class="image-grid single">
+      <div class="image-placeholder">
+        <div class="placeholder-content">
+          <div class="placeholder-icon"><i class="placeholder-image-icon">📊</i></div>
+          <div class="placeholder-text">Analysis Report Image Will Appear Here</div>
+          <div class="placeholder-details">Single image layout - Full width display</div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Signatures section (integrated in the same page) -->
+    <div class="signatures-section">
       <div class="signatures-container">
         <div class="signature-block">
           <div class="signature-line"></div>
-          <p>{{ report.coordinator }}</p>
+          <p>Name & Signature of Faculty-in-charge<br>{{ report.coordinator }}</p>
         </div>
         <div class="signature-block">
           <div class="signature-line"></div>
-          <p>{{ report.hodName }}</p>
+          <p>Name & Signature of HoD<br>{{ report.hodName }}</p>
         </div>
       </div>
     </div>
@@ -295,9 +390,11 @@
         // Apply appropriate class based on number of images
         if (count === 1) {
           grid.classList.add('single');
+          updateImageInfoHeader(grid.previousElementSibling, 1);
         } else if (count === 2) {
           grid.classList.add('two-images');
           analyzeImageRatios(grid, images);
+          updateImageInfoHeader(grid.previousElementSibling, 2);
         } else if (count === 3) {
           // Special handling for exactly 3 images
           grid.classList.add('multi-images');
@@ -310,12 +407,74 @@
           } else {
             analyzeImageRatios(grid, images);
           }
+          updateImageInfoHeader(grid.previousElementSibling, 3);
         } else if (count > 3 && count <= 6) {
           grid.classList.add('multi-images');
           analyzeImageRatios(grid, images);
+          updateImageInfoHeader(grid.previousElementSibling, count);
         } else if (count > 6) {
           grid.classList.add('many-images');
           analyzeImageRatios(grid, images);
+          updateImageInfoHeader(grid.previousElementSibling, count);
+        }
+        
+        // Update placeholder details based on layout
+        updatePlaceholderDetails(grid, images);
+      });
+    }
+    
+    // Function to update image info header with count
+    function updateImageInfoHeader(infoHeader, count) {
+      if (infoHeader && infoHeader.classList.contains('image-info-header')) {
+        const countElement = infoHeader.querySelector('.image-count');
+        if (countElement) {
+          countElement.textContent = count + (count === 1 ? ' image' : ' images');
+        }
+      }
+    }
+    
+    // Function to update placeholder details based on layout
+    function updatePlaceholderDetails(grid, images) {
+      const layoutClass = Array.from(grid.classList).find(cls => 
+        ['single', 'two-images', 'multi-images', 'many-images'].includes(cls));
+      const orientationClass = Array.from(grid.classList).find(cls => 
+        ['portrait-dominant', 'landscape-dominant'].includes(cls));
+      
+      let layoutDescription = '';
+      
+      if (layoutClass === 'single') {
+        layoutDescription = 'Single image layout - Full width display';
+      } else if (layoutClass === 'two-images') {
+        if (orientationClass === 'landscape-dominant') {
+          layoutDescription = 'Two images layout - Side by side (landscape orientation)';
+        } else {
+          layoutDescription = 'Two images layout - Stacked vertically (portrait orientation)';
+        }
+      } else if (layoutClass === 'multi-images') {
+        if (images.length === 3) {
+          if (grid.classList.contains('three-portrait')) {
+            layoutDescription = 'Three images layout - Equal width, portrait optimized';
+          } else if (orientationClass === 'portrait-dominant') {
+            layoutDescription = 'Three images layout - Grid arrangement, portrait optimized';
+          } else {
+            layoutDescription = 'Three images layout - Grid arrangement, landscape optimized';
+          }
+        } else {
+          if (orientationClass === 'portrait-dominant') {
+            layoutDescription = 'Multi-image layout - Grid arrangement, portrait optimized';
+          } else {
+            layoutDescription = 'Multi-image layout - Grid arrangement, landscape optimized';
+          }
+        }
+      } else if (layoutClass === 'many-images') {
+        layoutDescription = 'Many images layout - Compact grid arrangement';
+      }
+      
+      // Update each placeholder's details
+      images.forEach(img => {
+        const detailsElement = img.querySelector('.placeholder-details');
+        if (detailsElement) {
+          detailsElement.textContent = layoutDescription;
         }
       });
     }
@@ -325,6 +484,7 @@
       // Count portrait and landscape images
       let portraitCount = 0;
       let landscapeCount = 0;
+      const count = images.length;
       
       // For preview placeholders, we'll check if there are actual images inside
       // or use a more accurate detection method
@@ -346,11 +506,17 @@
         
         if (isPortrait) {
           img.dataset.orientation = 'portrait';
-          if (!actualImg) img.textContent += ' (Portrait)';
+          const textElement = img.querySelector('.placeholder-text');
+          if (textElement) {
+            textElement.textContent = textElement.textContent.split(' (')[0] + ' (Portrait)';
+          }
           portraitCount++;
         } else {
           img.dataset.orientation = 'landscape';
-          if (!actualImg) img.textContent += ' (Landscape)';
+          const textElement = img.querySelector('.placeholder-text');
+          if (textElement) {
+            textElement.textContent = textElement.textContent.split(' (')[0] + ' (Landscape)';
+          }
           landscapeCount++;
         }
       });
@@ -362,36 +528,34 @@
         grid.classList.add('landscape-dominant');
       }
       
-      // Add a summary of the analysis to the grid
-      const summary = document.createElement('div');
-      summary.className = 'image-analysis-summary';
-      summary.style.fontSize = '12px';
-      summary.style.color = '#666';
-      summary.style.marginTop = '10px';
-      summary.style.textAlign = 'center';
-      summary.innerHTML = `Image analysis: ${portraitCount} portrait, ${landscapeCount} landscape images`;
-      
-      // Check if summary already exists
-      const existingSummary = grid.querySelector('.image-analysis-summary');
-      if (existingSummary) {
-        grid.replaceChild(summary, existingSummary);
-      } else {
-        grid.appendChild(summary);
+      // Update the image info header with detailed layout information
+      const infoHeader = grid.previousElementSibling;
+      if (infoHeader && infoHeader.classList.contains('image-info-header')) {
+        const formatElement = infoHeader.querySelector('.image-format');
+        const sizeElement = infoHeader.querySelector('.image-size');
+        
+        if (formatElement && sizeElement) {
+          // Update size recommendation based on orientation
+          if (portraitCount > landscapeCount) {
+            sizeElement.textContent = 'Recommended size: 800x1200px (Portrait)';
+          } else {
+            sizeElement.textContent = 'Recommended size: 1200x800px (Landscape)';
+          }
+        }
       }
+      
+      // Add a detailed summary of the image layout to the grid
+      const layoutInfo = document.createElement('div');
+      layoutInfo.className = 'image-layout-info';
+      layoutInfo.style.backgroundColor = '#f0f7ff';
+      layoutInfo.style.padding = '10px';
+      layoutInfo.style.borderRadius = '4px';
     }
     
-    // Run setup when DOM is fully loaded
-    document.addEventListener('DOMContentLoaded', setupImageGrids);
-    
-    // In a real implementation, we would also handle actual image uploads
-    // This would involve analyzing the actual dimensions of uploaded images
-    // For demonstration purposes, we're using placeholders with simulated orientations
+    // Initialize the image grids when the page loads
+    document.addEventListener('DOMContentLoaded', function() {
+      setupImageGrids();
+    });
   </script>
 </body>
 </html>
-.signature-block:first-child {
-  text-align: left;
-}
-.signature-block:last-child {
-  text-align: right;
-}
