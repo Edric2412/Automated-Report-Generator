@@ -417,6 +417,8 @@ async def generate_report(
                             break
         replace_placeholder_with_html(doc, "{{summary}}", summary)
         replace_placeholder_with_html(doc, "{{outcome}}", outcome)
+        # Add page break after outcome section
+        doc.add_page_break()
         update_header(doc, eventType)
 
         image_sections = [
@@ -429,7 +431,8 @@ async def generate_report(
             if images:
                 valid_images = [img for img in images if img and img.filename] if images else []
                 if valid_images:
-                    doc.add_page_break()
+                    
+                    # Add section title
                     p = doc.add_paragraph()
                     run = p.add_run(section_name)
                     run.bold = True
@@ -437,100 +440,52 @@ async def generate_report(
                     run.font.name = 'DIN Pro Regular'
                     run.font.color.rgb = RGBColor(0, 112, 192)  # Blue color
                     
-                    # Use appropriate layout based on number of images
-                    if len(valid_images) >= 1:
-                        # Calculate the number of rows and columns needed
-                        if len(valid_images) == 1:
-                            # For single image, use full width
-                            cols = 1
-                            rows = 1
-                        elif len(valid_images) <= 3:
-                            # For 2-3 images, stack them vertically
-                            cols = 1
-                            rows = len(valid_images)
-                        else:
-                            # For 4+ images, create a grid layout
-                            cols = 2  # Maximum 2 images per row
-                            rows = (len(valid_images) + 1) // 2  # Round up division
-                        
-                        # Create a table for the images
-                        table = doc.add_table(rows=rows, cols=cols)
-                        table.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                        # Remove borders from the table
-                        remove_table_borders(table)
-                        
-                        # Add images to the table cells
-                        img_index = 0
-                        for row_idx in range(rows):
-                            for col_idx in range(cols):
-                                if img_index < len(valid_images):
-                                    img = valid_images[img_index]
-                                    cell = table.cell(row_idx, col_idx)
-                                    # Clear default paragraph in cell
-                                    if cell.paragraphs:
-                                        cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                    # Calculate the number of rows needed for a 2-column grid
+                    cols = 2  # Fixed 2-column layout as requested
+                    rows = (len(valid_images) + 1) // 2  # Round up division to get number of rows
+                    
+                    # Create a table for the images with 2 columns
+                    table = doc.add_table(rows=rows, cols=cols)
+                    table.alignment = WD_TABLE_ALIGNMENT.CENTER
+                    
+                    # Remove borders from the table for clean layout
+                    remove_table_borders(table)
+                    
+                    # Add images to the table cells
+                    img_index = 0
+                    for row_idx in range(rows):
+                        for col_idx in range(cols):
+                            if img_index < len(valid_images):
+                                img = valid_images[img_index]
+                                cell = table.cell(row_idx, col_idx)
+                                
+                                # Center align the content in the cell
+                                if cell.paragraphs:
+                                    cell.paragraphs[0].alignment = WD_ALIGN_PARAGRAPH.CENTER
+                                
+                                # Save the image temporarily
+                                unique_filename = f"{uuid.uuid4()}_{img.filename}"
+                                img_path = os.path.join(UPLOAD_DIR, unique_filename)
+                                with open(img_path, "wb") as buffer:
+                                    await img.seek(0)
+                                    contents = await img.read()
+                                    buffer.write(contents)
+                                
+                                try:
+                                    # Use fixed width of 3.0 inches for all images as requested
+                                    fixed_width = Inches(3.0)
+                                    cell.paragraphs[0].add_run().add_picture(img_path, width=fixed_width)
                                     
-                                    unique_filename = f"{uuid.uuid4()}_{img.filename}"
-                                    img_path = os.path.join(UPLOAD_DIR, unique_filename)
-                                    with open(img_path, "wb") as buffer:
-                                        await img.seek(0)
-                                        contents = await img.read()
-                                        buffer.write(contents)
-                                    try:
-                                        # Calculate width based on number of columns and image orientation
-                                        from PIL import Image
-                                        with Image.open(img_path) as img_obj:
-                                            width, height = img_obj.size
-                                            is_landscape = width > height
-                                        
-                                        # Adjust size based on orientation and layout
-                                        if len(valid_images) == 1:
-                                            # Single image - use full width but respect aspect ratio
-                                            doc_width = Inches(6.0)
-                                            cell.paragraphs[0].add_run().add_picture(img_path, width=doc_width)
-                                        elif len(valid_images) <= 3:
-                                            # 2-3 images stacked vertically - use full width
-                                            doc_width = Inches(6.0)
-                                            cell.paragraphs[0].add_run().add_picture(img_path, width=doc_width)
-                                        else:
-                                            # 4+ images in grid - adjust width based on orientation
-                                            if is_landscape:
-                                                doc_width = Inches(3.4)  # Slightly less than half page for margins
-                                            else:
-                                                doc_width = Inches(2.8)  # Narrower for portrait images
-                                            cell.paragraphs[0].add_run().add_picture(img_path, width=doc_width)
-                                        os.remove(img_path)
-                                    except Exception as e:
-                                        print(f"Error processing image {img.filename}: {e}")
-                                    img_index += 1
-                    else:
-                        # For single images or other sections, use the original approach
-                        for img in valid_images:
-                            p_img = doc.add_paragraph()
-                            p_img.alignment = WD_ALIGN_PARAGRAPH.CENTER
-                            unique_filename = f"{uuid.uuid4()}_{img.filename}"
-                            img_path = os.path.join(UPLOAD_DIR, unique_filename)
-                            with open(img_path, "wb") as buffer:
-                                await img.seek(0)
-                                contents = await img.read()
-                                buffer.write(contents)
-                            try:
-                                # Determine image orientation and adjust size accordingly
-                                from PIL import Image
-                                with Image.open(img_path) as img_obj:
-                                    width, height = img_obj.size
-                                    is_landscape = width > height
+                                    # Clean up the temporary file
+                                    os.remove(img_path)
+                                except Exception as e:
+                                    print(f"Error processing image {img.filename}: {e}")
                                 
-                                # Use appropriate width based on orientation
-                                if is_landscape:
-                                    doc_width = Inches(6.0)  # Full width for landscape
-                                else:
-                                    doc_width = Inches(5.0)  # Slightly narrower for portrait to maintain proportions
-                                
-                                p_img.add_run().add_picture(img_path, width=doc_width)
-                                os.remove(img_path)
-                            except Exception as e:
-                                print(f"Error processing image {img.filename}: {e}")
+                                img_index += 1
+                    
+                    # Add page break after each section, except for Analysis Report
+                    if section_name != "Analysis Report":
+                        doc.add_page_break()
 
         # Add signature section
         add_signature_section(doc, coordinator, hodName)
