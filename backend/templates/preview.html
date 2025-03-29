@@ -284,7 +284,6 @@
   <div class="page" id="page3">
     <div class="section-title">Action Photos</div>
     <div class="image-info-header">
-      <span class="image-count">4 images</span>
       <span class="image-format">Recommended format: JPG/PNG</span>
       <span class="image-size">Recommended size: 1200x800px (Landscape) or 800x1200px (Portrait)</span>
     </div>
@@ -324,7 +323,6 @@
   <div class="page" id="page4">
     <div class="section-title">Attendance Sheet</div>
     <div class="image-info-header">
-      <span class="image-count">1 image</span>
       <span class="image-format">Recommended format: JPG/PNG/PDF</span>
       <span class="image-size">Recommended size: 1200x1800px (Portrait)</span>
     </div>
@@ -340,10 +338,9 @@
   </div>
   
   <!-- Page 5: Analysis Report with Signatures -->
-  <div class="page last-page" id="page5">
+  <div class="page" id="page5">
     <div class="section-title">Analysis Report</div>
     <div class="image-info-header">
-      <span class="image-count">1 image</span>
       <span class="image-format">Recommended format: JPG/PNG/PDF</span>
       <span class="image-size">Recommended size: 1200x1800px (Portrait)</span>
     </div>
@@ -357,8 +354,8 @@
       </div>
     </div>
     
-    <!-- Signatures section (integrated in the same page) -->
-    <div class="signatures-section">
+    <!-- Signatures Section -->
+    <div style="margin-top: 50px;">
       <div class="signatures-container">
         <div class="signature-block">
           <div class="signature-line"></div>
@@ -371,6 +368,8 @@
       </div>
     </div>
   </div>
+  
+  <!-- Page 5 now contains both Analysis Report and Signatures -->
   <script>
     // Function to set appropriate classes for image grids based on number of images and their aspect ratios
     function setupImageGrids() {
