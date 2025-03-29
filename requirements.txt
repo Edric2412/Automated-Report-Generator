@@ -1,10 +1,5 @@
-fastapi
-uvicorn
-python-docx
-python-multipart
-jinja2
-docx2pdf
-bs4
-Pillow
-python-docx-template
-python-docx2pdf
+fastapi==0.115.0
+uvicorn==0.29.0
+python-multipart==0.0.9
+python-dotenv==1.0.1
+pydantic==2.7.4
