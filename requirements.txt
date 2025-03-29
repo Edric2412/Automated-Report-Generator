@@ -5,3 +5,5 @@ python-dotenv
 pydantic
 python-docx
 bs4
+pillow
+jinja2
