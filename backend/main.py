@@ -80,6 +80,7 @@ async def preview_report(
     hodName: str = Form(...)
 ):
     try:
+        # Format date/time consistently for both preview and download
         if eventDurationType.lower() == "multiple" and startDate and endDate:
             formatted_dateTime = (
                 datetime.strptime(startDate, "%Y-%m-%d").strftime("%B %d, %Y")
@@ -111,7 +112,10 @@ async def preview_report(
             "outcome": outcome,
             "hodName": hodName
         }
-        return templates.TemplateResponse("preview.html", {"request": request, "report": report_data})
+        
+        # Add query parameters for image counts to be used by JavaScript
+        response = templates.TemplateResponse("preview.html", {"request": request, "report": report_data})
+        return response
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Preview generation failed: {str(e)}")
 
@@ -440,16 +444,88 @@ async def generate_report(
                     run.font.name = 'DIN Pro Regular'
                     run.font.color.rgb = RGBColor(0, 112, 192)  # Blue color
                     
-                    # Calculate the number of rows needed for a 2-column grid
-                    cols = 2  # Fixed 2-column layout as requested
-                    rows = (len(valid_images) + 1) // 2  # Round up division to get number of rows
+                    # Analyze images to determine optimal layout
+                    # Count portrait and landscape images to determine best layout
+                    portrait_count = 0
+                    landscape_count = 0
+                    square_count = 0
                     
-                    # Create a table for the images with 2 columns
+                    # Temporarily save images to analyze their dimensions
+                    temp_image_paths = []
+                    for img in valid_images:
+                        unique_filename = f"{uuid.uuid4()}_{img.filename}"
+                        img_path = os.path.join(UPLOAD_DIR, unique_filename)
+                        with open(img_path, "wb") as buffer:
+                            await img.seek(0)
+                            contents = await img.read()
+                            buffer.write(contents)
+                        
+                        # Analyze image dimensions
+                        try:
+                            with Image.open(img_path) as pil_img:
+                                img_width, img_height = pil_img.size
+                                aspect_ratio = img_width / img_height
+                                
+                                if aspect_ratio < 0.8:  # Portrait
+                                    portrait_count += 1
+                                elif aspect_ratio > 1.2:  # Landscape
+                                    landscape_count += 1
+                                else:  # Square-ish
+                                    square_count += 1
+                                    
+                                temp_image_paths.append((img_path, aspect_ratio))
+                        except Exception as e:
+                            print(f"Error analyzing image {img.filename}: {e}")
+                            # If analysis fails, assume it's a standard image
+                            temp_image_paths.append((img_path, 1.0))
+                    
+                    # Determine optimal layout based on image count and orientations
+                    if len(valid_images) <= 2:
+                        # For 1-2 images, use a single column if both are portrait
+                        if portrait_count == len(valid_images):
+                            cols = 1
+                            rows = len(valid_images)
+                        else:
+                            # Otherwise use 2 columns for 2 images, 1 column for 1 image
+                            cols = min(2, len(valid_images))
+                            rows = (len(valid_images) + cols - 1) // cols  # Ceiling division
+                    elif len(valid_images) <= 4:
+                        # For 3-4 images, use 2 columns
+                        cols = 2
+                        rows = (len(valid_images) + 1) // 2
+                    else:
+                        # For 5+ images, use 3 columns if mostly portrait, otherwise 2 columns
+                        if portrait_count > (len(valid_images) // 2):
+                            cols = 3
+                        else:
+                            cols = 2
+                        rows = (len(valid_images) + cols - 1) // cols  # Ceiling division
+                    
+                    # Create a table for the images with the determined layout
                     table = doc.add_table(rows=rows, cols=cols)
                     table.alignment = WD_TABLE_ALIGNMENT.CENTER
                     
                     # Remove borders from the table for clean layout
                     remove_table_borders(table)
+                    
+                    # Add spacing between cells for better image separation
+                    tbl = table._tbl
+                    tblPr = tbl.find(qn('w:tblPr'))
+                    if tblPr is None:
+                        tblPr = OxmlElement('w:tblPr')
+                        tbl.insert(0, tblPr)
+                    
+                    # Set cell spacing to exactly 0.2 inches (288 twips) on all sides
+                    tblCellMar = OxmlElement('w:tblCellMar')
+                    
+                    # Add spacing on all sides (left, right, top, bottom)
+                    for side in ['top', 'start', 'bottom', 'end']:
+                        spacing = OxmlElement(f'w:{side}')
+                        spacing.set(qn('w:w'), '288')
+                        spacing.set(qn('w:type'), 'dxa')
+                        tblCellMar.append(spacing)
+                    
+                    tblPr.append(tblCellMar)
                     
                     # Add images to the table cells
                     img_index = 0
@@ -458,6 +534,20 @@ async def generate_report(
                             if img_index < len(valid_images):
                                 img = valid_images[img_index]
                                 cell = table.cell(row_idx, col_idx)
+                                
+                                # Add cell margins for better spacing between images
+                                tc = cell._tc
+                                tcPr = tc.get_or_add_tcPr()
+                                tcMar = OxmlElement('w:tcMar')
+                                
+                                # Add margin on all sides (left, right, top, bottom) - exactly 0.2 inches (288 twips)
+                                for side in ['top', 'start', 'bottom', 'end']:
+                                    node = OxmlElement(f'w:{side}')
+                                    node.set(qn('w:w'), '288')
+                                    node.set(qn('w:type'), 'dxa')
+                                    tcMar.append(node)
+                                
+                                tcPr.append(tcMar)
                                 
                                 # Center align the content in the cell
                                 if cell.paragraphs:
@@ -472,9 +562,36 @@ async def generate_report(
                                     buffer.write(contents)
                                 
                                 try:
-                                    # Use fixed width of 3.0 inches for all images as requested
-                                    fixed_width = Inches(3.0)
-                                    cell.paragraphs[0].add_run().add_picture(img_path, width=fixed_width)
+                                    # Get the saved image path and aspect ratio
+                                    img_path, aspect_ratio = temp_image_paths[img_index]
+                                    
+                                    # Calculate optimal image size based on number of columns and aspect ratio
+                                    # Base width depends on number of columns
+                                    if cols == 1:
+                                        base_width = Inches(6.0)  # Full width for single column
+                                    elif cols == 2:
+                                        base_width = Inches(3.0)  # Half width for 2 columns
+                                    else:  # cols == 3
+                                        base_width = Inches(2.0)  # Third width for 3 columns
+                                    
+                                    # Adjust width based on aspect ratio
+                                    if aspect_ratio < 0.8:  # Portrait
+                                        # For portrait images, reduce width to avoid excessive height
+                                        img_width = base_width * 0.85
+                                    elif aspect_ratio > 1.5:  # Wide landscape
+                                        # For wide landscape, use full base width
+                                        img_width = base_width
+                                    else:  # Standard/square images
+                                        img_width = base_width * 0.9
+                                    
+                                    # Reduce paragraph spacing for compact layout
+                                    paragraph = cell.paragraphs[0]
+                                    paragraph.paragraph_format.space_before = Pt(4)
+                                    paragraph.paragraph_format.space_after = Pt(4)
+                                    
+                                    # Add the image with proper spacing and adaptive width
+                                    run = paragraph.add_run()
+                                    run.add_picture(img_path, width=img_width)
                                     
                                     # Clean up the temporary file
                                     os.remove(img_path)
@@ -483,7 +600,16 @@ async def generate_report(
                                 
                                 img_index += 1
                     
+                    # Clean up any remaining temporary files
+                    for img_path, _ in temp_image_paths:
+                        if os.path.exists(img_path):
+                            try:
+                                os.remove(img_path)
+                            except Exception as e:
+                                print(f"Error removing temporary file {img_path}: {e}")
+                    
                     # Add page break after each section, except for Analysis Report
+                    # This ensures each image section starts on a new page
                     if section_name != "Analysis Report":
                         doc.add_page_break()
 
