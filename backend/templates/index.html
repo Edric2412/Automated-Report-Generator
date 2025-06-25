@@ -1,4 +1,4 @@
-<!-- index.html (Frontend modifications) -->
+<!-- index.html (Updated with Advanced Geotag Overlay) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -120,19 +120,37 @@
             </div>
           </div>
           
-          <!-- CKEditor for Summary -->
+          <!-- CKEditor for Summary with Auto-Summary Feature -->
           <div class="space-y-2 mt-6">
             <label class="block text-sm font-medium">Summary of the Event</label>
             <textarea id="editor-summary" name="summary" class="w-full bg-gray-800 border border-gray-700 rounded-button px-4 py-2.5 input-glow focus:outline-none focus:border-secondary" placeholder="Enter event summary" required></textarea>
+            <div class="mt-2">
+              <button type="button" id="summarizeSummaryBtn" class="text-sm px-4 py-1.5 border border-secondary text-secondary hover:bg-secondary/20 rounded-button transition-colors duration-300">
+                <i class="ri-sparkling-2-line mr-1"></i> Generate AI Summary
+              </button>
+              <div id="summarySuggestion" class="hidden mt-2 p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
+                <p class="text-sm text-gray-300"></p>
+                <button type="button" class="use-suggestion-btn mt-2 text-sm text-secondary hover:underline">Use this summary</button>
+              </div>
+            </div>
           </div>
           
-          <!-- CKEditor for Outcome -->
+          <!-- CKEditor for Outcome with Auto-Summary Feature -->
           <div class="space-y-2 mt-6">
             <label class="block text-sm font-medium">Outcome of the Event</label>
             <textarea id="editor-outcome" name="outcome" class="w-full bg-gray-800 border border-gray-700 rounded-button px-4 py-2.5 input-glow focus:outline-none focus:border-secondary" placeholder="Enter event outcome" required></textarea>
+            <div class="mt-2">
+                <button type="button" id="summarizeOutcomeBtn" class="text-sm px-4 py-1.5 border border-secondary text-secondary hover:bg-secondary/20 rounded-button transition-colors duration-300">
+                    <i class="ri-sparkling-2-line mr-1"></i> Generate AI Summary
+                </button>
+                <div id="outcomeSuggestion" class="hidden mt-2 p-4 bg-gray-800/50 border border-gray-700 rounded-lg">
+                    <p class="text-sm text-gray-300"></p>
+                    <button type="button" class="use-suggestion-btn mt-2 text-sm text-secondary hover:underline">Use this summary</button>
+                </div>
+            </div>
           </div>
           
-          <!-- File upload sections (unchanged) -->
+          <!-- File upload sections -->
           <div class="space-y-2 mt-6">
             <label class="block text-sm font-medium">Upload Invite Poster</label>
             <div id="invitePosterUpload" class="upload-zone border-2 border-dashed border-gray-700/50 rounded-2xl p-8 text-center bg-gray-800/20 hover:bg-gray-800/30 transition-all duration-300 group">
@@ -146,7 +164,13 @@
             </div>
           </div>
           <div class="space-y-2 mt-6">
-            <label class="block text-sm font-medium">Upload Action Photos</label>
+            <!-- Modified Action Photos label with Take Photo button -->
+            <div class="flex items-center justify-between">
+              <label class="block text-sm font-medium">Upload Action Photos</label>
+              <button type="button" id="takePhotoBtn" class="text-sm px-4 py-1.5 border border-secondary text-secondary hover:bg-secondary/20 rounded-button transition-colors duration-300">
+                <i class="ri-camera-line mr-1"></i> Take Photo
+              </button>
+            </div>
             <div id="actionPhotosUpload" class="upload-zone border-2 border-dashed border-gray-700/50 rounded-2xl p-8 text-center bg-gray-800/20 hover:bg-gray-800/30 transition-all duration-300 group">
               <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <i class="ri-upload-cloud-line ri-3x text-gray-400 transition-all duration-300 group-hover:text-secondary group-hover:scale-110"></i>
@@ -220,95 +244,333 @@
       </div>
     </div>
   </div>
+
+  <!-- Camera Modal -->
+  <div id="cameraModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
+    <div class="absolute inset-0 bg-black bg-opacity-75" id="cameraModalOverlay"></div>
+    <div class="glass-effect rounded-2xl p-6 max-w-2xl w-full mx-4 relative z-10 text-center">
+        <h3 class="text-xl font-bold mb-4">Take Action Photo</h3>
+        <div id="cameraView" class="relative">
+            <video id="cameraFeed" class="w-full h-auto rounded-lg" autoplay playsinline></video>
+            <p id="cameraError" class="text-red-400 mt-2 hidden">Could not access camera. Please check permissions.</p>
+            <button id="captureBtn" class="mt-4 px-8 py-2.5 border border-secondary bg-secondary hover:bg-secondary-dark text-white rounded-button transition-colors duration-300">
+                <i class="ri-camera-fill mr-2"></i>Capture
+            </button>
+        </div>
+        <div id="previewView" class="hidden relative">
+            <canvas id="photoCanvas" class="w-full h-auto rounded-lg"></canvas>
+            <p id="geoStatus" class="text-sm text-yellow-400 mt-2">Fetching location...</p>
+            <div class="mt-4 flex justify-center space-x-4">
+                <button id="retakeBtn" class="px-6 py-2 border border-gray-500 text-gray-300 hover:bg-gray-700 rounded-button transition-colors">Retake</button>
+                <button id="saveBtn" class="px-6 py-2 border border-secondary bg-secondary hover:bg-secondary-dark text-white rounded-button transition-colors" disabled>
+                    <i class="ri-loader-4-line animate-spin mr-2"></i><span>Save Photo</span>
+                </button>
+            </div>
+        </div>
+        <button id="closeCameraModal" class="absolute top-4 right-4 text-gray-400 hover:text-white">
+            <i class="ri-close-line ri-lg"></i>
+        </button>
+    </div>
+  </div>
+
   <script>
-    // Initialize CKEditor 5 for Summary and Outcome textareas
     let summaryEditor, outcomeEditor;
     ClassicEditor
       .create(document.querySelector('#editor-summary'))
-      .then(editor => {
-        summaryEditor = editor;
-      })
-      .catch(error => {
-        console.error(error);
-      });
+      .then(editor => { summaryEditor = editor; })
+      .catch(error => { console.error(error); });
     ClassicEditor
       .create(document.querySelector('#editor-outcome'))
-      .then(editor => {
-        outcomeEditor = editor;
-      })
-      .catch(error => {
-        console.error(error);
-      });
+      .then(editor => { outcomeEditor = editor; })
+      .catch(error => { console.error(error); });
       
     document.addEventListener('DOMContentLoaded', () => {
-      const dateInput = document.querySelector('input[name="date"]');
-      const startTimeInput = document.querySelector('input[name="startTime"]');
-      const endTimeInput = document.querySelector('input[name="endTime"]');
-      const startDateInput = document.querySelector('input[name="startDate"]');
-      const endDateInput = document.querySelector('input[name="endDate"]');
+      const form = document.getElementById('eventForm');
       
-      // Function to toggle required attributes based on selected duration type
-      function toggleRequiredFields(isSingleDay) {
-        if (isSingleDay) {
-          dateInput.setAttribute('required', '');
-          startTimeInput.setAttribute('required', '');
-          endTimeInput.setAttribute('required', '');
-          startDateInput.removeAttribute('required');
-          endDateInput.removeAttribute('required');
-        } else {
-          dateInput.removeAttribute('required');
-          startTimeInput.removeAttribute('required');
-          endTimeInput.removeAttribute('required');
-          startDateInput.setAttribute('required', '');
-          endDateInput.setAttribute('required', '');
-        }
-      }
-      
-      // Set initial state
-      toggleRequiredFields(true);
+      // Event Type and Expert Name Field Logic
       const eventType = document.getElementById('eventType');
       const expertNameField = document.getElementById('expertNameField');
-      const previewBtn = document.getElementById('previewBtn');
-      const previewSection = document.getElementById('previewSection');
-      const previewFrame = document.getElementById('previewFrame');
-      const form = document.getElementById('eventForm');
-      const successModal = document.getElementById('successModal');
-      const closeModal = document.getElementById('closeModal');
-      const downloadButton = document.getElementById('downloadButton');
-      const viewReportBtn = document.getElementById('viewReportBtn');
-      
-      // Show expert name field for certain event types
-      eventType.addEventListener('change', () => {
+      eventType.addEventListener('input', () => {
         const type = eventType.value.toLowerCase();
-        if (type === 'workshop' || type === 'seminar' || type === 'conference') {
-          expertNameField.classList.remove('hidden');
-        } else {
-          expertNameField.classList.add('hidden');
-        }
-      });
-      
-      // Toggle event duration fields based on selection
-      const eventDurationRadios = document.getElementsByName('eventDurationType');
-      const singleDayFields = document.getElementById('singleDayFields');
-      const multipleDayFields = document.getElementById('multipleDayFields');
-      eventDurationRadios.forEach(radio => {
-        radio.addEventListener('change', () => {
-          if (radio.value === 'single' && radio.checked) {
-            singleDayFields.classList.remove('hidden');
-            multipleDayFields.classList.add('hidden');
-+           // **Make date/time required, clear multiple-day requirements**
-+           toggleRequiredFields(true);
-          } else if (radio.value === 'multiple' && radio.checked) {
-            multipleDayFields.classList.remove('hidden');
-            singleDayFields.classList.add('hidden');
-+           // **Make start/end dates required, clear single-day requirements**
-+           toggleRequiredFields(false);
-          }
-        });
+        expertNameField.classList.toggle('hidden', !['workshop', 'seminar', 'conference'].includes(type));
       });
 
+      // Event Duration Fields Logic
+      const singleDayFields = document.getElementById('singleDayFields');
+      const multipleDayFields = document.getElementById('multipleDayFields');
+      const eventDurationRadios = document.getElementsByName('eventDurationType');
       
-      // File upload fields configuration (same as before)
+      function toggleRequiredFields(isSingleDay) {
+        document.querySelector('input[name="date"]').required = isSingleDay;
+        document.querySelector('input[name="startTime"]').required = isSingleDay;
+        document.querySelector('input[name="endTime"]').required = isSingleDay;
+        document.querySelector('input[name="startDate"]').required = !isSingleDay;
+        document.querySelector('input[name="endDate"]').required = !isSingleDay;
+      }
+      
+      eventDurationRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          const isSingle = e.target.value === 'single';
+          singleDayFields.classList.toggle('hidden', !isSingle);
+          multipleDayFields.classList.toggle('hidden', isSingle);
+          toggleRequiredFields(isSingle);
+        });
+      });
+      toggleRequiredFields(true); // Initial state
+
+      // --- AI Summarizer Logic ---
+      const setupSummarizer = (btnId, editorInstance, suggestionId) => {
+          if (!editorInstance) { return; }
+          const btn = document.getElementById(btnId);
+          const suggestionContainer = document.getElementById(suggestionId);
+          const suggestionText = suggestionContainer.querySelector('p');
+          const useBtn = suggestionContainer.querySelector('.use-suggestion-btn');
+
+          btn.addEventListener('click', async () => {
+              const originalBtnText = btn.innerHTML;
+              btn.innerHTML = '<i class="ri-loader-4-line animate-spin mr-1"></i> Generating...';
+              btn.disabled = true;
+              try {
+                  const content = editorInstance.getData();
+                  if (!content.trim()) {
+                      alert('Please enter some text to summarize.');
+                      return;
+                  }
+                  const response = await fetch('/api/auto-summarize', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ text: content, sentences: 3 })
+                  });
+                  if (!response.ok) {
+                      const errData = await response.json();
+                      throw new Error(errData.detail || 'Failed to generate summary.');
+                  }
+                  const data = await response.json();
+                  suggestionText.textContent = data.summary;
+                  suggestionContainer.classList.remove('hidden');
+              } catch (error) {
+                  console.error('Summarization error:', error);
+                  alert(error.message);
+              } finally {
+                  btn.innerHTML = originalBtnText;
+                  btn.disabled = false;
+              }
+          });
+          useBtn.addEventListener('click', () => {
+              editorInstance.setData(suggestionText.textContent);
+              suggestionContainer.classList.add('hidden');
+          });
+      };
+      
+      setTimeout(() => {
+          setupSummarizer('summarizeSummaryBtn', summaryEditor, 'summarySuggestion');
+          setupSummarizer('summarizeOutcomeBtn', outcomeEditor, 'outcomeSuggestion');
+      }, 1000);
+      
+
+      // --- Camera Capture Logic with Advanced Overlay ---
+      const cameraModal = document.getElementById('cameraModal');
+      const cameraModalOverlay = document.getElementById('cameraModalOverlay');
+      const takePhotoBtn = document.getElementById('takePhotoBtn');
+      const closeCameraModalBtn = document.getElementById('closeCameraModal');
+      const cameraView = document.getElementById('cameraView');
+      const previewView = document.getElementById('previewView');
+      const cameraFeed = document.getElementById('cameraFeed');
+      const cameraError = document.getElementById('cameraError');
+      const captureBtn = document.getElementById('captureBtn');
+      const retakeBtn = document.getElementById('retakeBtn');
+      const saveBtn = document.getElementById('saveBtn');
+      const saveBtnSpinner = saveBtn.querySelector('i');
+      const photoCanvas = document.getElementById('photoCanvas');
+      const geoStatus = document.getElementById('geoStatus');
+      const actionPhotosInput = document.getElementById('actionPhotos');
+      let stream;
+
+      const stopCamera = () => {
+          if (stream) { stream.getTracks().forEach(track => track.stop()); }
+          stream = null;
+      };
+
+      takePhotoBtn.addEventListener('click', async () => {
+          cameraModal.classList.remove('hidden');
+          cameraView.classList.remove('hidden');
+          previewView.classList.add('hidden');
+          cameraError.classList.add('hidden');
+          
+          try {
+              stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+              cameraFeed.srcObject = stream;
+          } catch (err) {
+              console.error("Camera access error:", err);
+              try {
+                stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                cameraFeed.srcObject = stream;
+              } catch (fallbackErr) {
+                cameraError.classList.remove('hidden');
+                stopCamera();
+              }
+          }
+      });
+      
+      const closeCamera = () => {
+        stopCamera();
+        cameraModal.classList.add('hidden');
+      };
+      
+      closeCameraModalBtn.addEventListener('click', closeCamera);
+      cameraModalOverlay.addEventListener('click', closeCamera);
+      
+      captureBtn.addEventListener('click', () => {
+          cameraView.classList.add('hidden');
+          previewView.classList.remove('hidden');
+          saveBtn.disabled = true;
+          saveBtnSpinner.classList.remove('hidden');
+          geoStatus.textContent = 'Fetching location...';
+
+          const context = photoCanvas.getContext('2d');
+          photoCanvas.width = cameraFeed.videoWidth;
+          photoCanvas.height = cameraFeed.videoHeight;
+          context.drawImage(cameraFeed, 0, 0, photoCanvas.width, photoCanvas.height);
+          stopCamera();
+
+          navigator.geolocation.getCurrentPosition(
+              (pos) => {
+                  const { latitude, longitude } = pos.coords;
+                  const timestamp = new Date();
+                  fetchAddress(latitude, longitude, timestamp);
+              },
+              (err) => {
+                  console.warn(`Geolocation error: ${err.message}`);
+                  const timestamp = new Date();
+                  drawOverlay({ timestamp }); // Call with only timestamp
+                  geoStatus.textContent = 'Could not get location. Address will be missing.';
+                  geoStatus.classList.remove('text-green-400', 'text-yellow-400');
+                  geoStatus.classList.add('text-red-400');
+                  saveBtn.disabled = false;
+                  saveBtnSpinner.classList.add('hidden');
+              },
+              { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+          );
+      });
+      
+      const fetchAddress = async (lat, lon, timestamp) => {
+        geoStatus.textContent = 'Location found. Fetching address...';
+        geoStatus.classList.remove('text-green-400', 'text-red-400');
+        geoStatus.classList.add('text-yellow-400');
+        const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
+        let locationData = { lat, lon, timestamp };
+        
+        try {
+            const response = await fetch(url, { headers: { 'User-Agent': 'EventReportGenerator/1.0' } });
+            if (!response.ok) throw new Error('Nominatim API request failed');
+            
+            const data = await response.json();
+            if (data && data.address) {
+                locationData.address = data.address;
+                locationData.displayName = data.display_name;
+                geoStatus.textContent = 'Address found!';
+                geoStatus.classList.replace('text-yellow-400', 'text-green-400');
+            } else {
+                 geoStatus.textContent = 'Could not determine address from location.';
+            }
+        } catch (error) {
+            console.error('Reverse geocoding error:', error);
+            geoStatus.textContent = 'Could not fetch address.';
+        } finally {
+            drawOverlay(locationData);
+            saveBtn.disabled = false;
+            saveBtnSpinner.classList.add('hidden');
+        }
+      };
+
+      const drawOverlay = (data) => {
+          const context = photoCanvas.getContext('2d');
+          const { width, height } = photoCanvas;
+          
+          // Define layout constants
+          const boxHeight = height * 0.20; // 20% of image height
+          const boxY = height - boxHeight;
+          const padding = boxHeight * 0.1;
+          const iconSize = boxHeight * 0.35;
+          const iconX = padding;
+          const iconY = boxY + padding;
+          const textBlockX = iconX + iconSize + padding;
+
+          // 1. Draw semi-transparent background
+          context.fillStyle = 'rgba(0, 0, 0, 0.65)';
+          context.fillRect(0, boxY, width, boxHeight);
+          
+          // 2. Draw map marker icon (as a simplified shape)
+          context.fillStyle = '#ea4335'; // Google red
+          context.beginPath();
+          context.moveTo(iconX + iconSize / 2, iconY + iconSize); // Bottom point
+          context.bezierCurveTo(iconX, iconY + iconSize / 1.5, iconX, iconY, iconX + iconSize / 2, iconY);
+          context.bezierCurveTo(iconX + iconSize, iconY, iconX + iconSize, iconY + iconSize / 1.5, iconX + iconSize / 2, iconY + iconSize);
+          context.fill();
+          context.fillStyle = 'white';
+          context.beginPath();
+          context.arc(iconX + iconSize / 2, iconY + iconSize / 2.5, iconSize / 5, 0, 2 * Math.PI);
+          context.fill();
+
+          // 3. Prepare and draw text lines
+          context.fillStyle = 'white';
+          context.textAlign = 'left';
+          context.textBaseline = 'top';
+
+          let mainLocation = 'Unknown Location';
+          let addressLine1 = '';
+          let addressLine2 = `Lat: ${data.lat?.toFixed(5) || 'N/A'}, Lon: ${data.lon?.toFixed(5) || 'N/A'}`;
+          let dateLine = data.timestamp.toLocaleString('en-GB').replace(',', '');
+
+          if (data.address) {
+              mainLocation = `${data.address.city || data.address.town || data.address.village || ''}, ${data.address.state || ''}, ${data.address.country || ''}`.replace(/^,|,$/g, '').trim();
+              addressLine1 = `${data.address.road || ''}, ${data.address.suburb || ''}`.replace(/^,|,$/g, '').trim();
+          }
+
+          const lineSpacing = 4;
+          // Main Location (Bold)
+          const mainFontSize = boxHeight * 0.15;
+          context.font = `bold ${mainFontSize}px sans-serif`;
+          let currentY = boxY + padding;
+          context.fillText(mainLocation, textBlockX, currentY);
+          currentY += mainFontSize + lineSpacing;
+
+          // Address Line 1
+          const regularFontSize = boxHeight * 0.12;
+          context.font = `${regularFontSize}px sans-serif`;
+          context.fillText(addressLine1, textBlockX, currentY);
+          currentY += regularFontSize + lineSpacing;
+
+          // Lat/Lon
+          context.fillText(addressLine2, textBlockX, currentY);
+          currentY += regularFontSize + lineSpacing;
+          
+          // Date/Time
+          context.fillText(dateLine, textBlockX, currentY);
+
+          // 4. Draw a "logo"
+          context.font = `italic bold ${regularFontSize}px sans-serif`;
+          context.fillStyle = 'rgba(255, 255, 255, 0.8)';
+          context.textAlign = 'right';
+          context.fillText("GPS Map Camera", width - padding, boxY + padding);
+      };
+
+      retakeBtn.addEventListener('click', () => { takePhotoBtn.click(); });
+
+      saveBtn.addEventListener('click', () => {
+          photoCanvas.toBlob((blob) => {
+              const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+              const newFile = new File([blob], `capture-${timestamp}.jpg`, { type: 'image/jpeg' });
+              const dt = new DataTransfer();
+              Array.from(actionPhotosInput.files).forEach(file => dt.items.add(file));
+              dt.items.add(newFile);
+              actionPhotosInput.files = dt.files;
+              actionPhotosInput.dispatchEvent(new Event('change'));
+              closeCamera();
+          }, 'image/jpeg', 0.9);
+      });
+      
+      // --- File upload and form submission logic remains the same ---
       const fileUploadFields = [
         { browseBtn: 'browseFiles1', inputId: 'invitePoster', displayId: 'selectedFiles1', dropZone: 'invitePosterUpload' },
         { browseBtn: 'browseFiles2', inputId: 'actionPhotos', displayId: 'selectedFiles2', dropZone: 'actionPhotosUpload' },
@@ -316,54 +578,44 @@
         { browseBtn: 'browseFiles4', inputId: 'analysisReport', displayId: 'selectedFiles4', dropZone: 'analysisReportUpload' }
       ];
       
-      // Global function to remove a file from an input
-      window.removeFile = function(fileIndex, inputId, displayId) {
+      window.removeFile = function(fileIndex, inputId) {
         const input = document.getElementById(inputId);
-        const newFiles = Array.from(input.files).filter((_, i) => i !== fileIndex);
         const dt = new DataTransfer();
-        newFiles.forEach(file => dt.items.add(file));
+        Array.from(input.files).filter((_, i) => i !== fileIndex).forEach(file => dt.items.add(file));
         input.files = dt.files;
-        updateFileDisplay(input, document.getElementById(displayId));
-    }
+        input.dispatchEvent(new Event('change'));
+      }
       
       function updateFileDisplay(input, display) {
         display.innerHTML = '';
-        if (input.files.length > 0) {
-          for (let i = 0; i < input.files.length; i++) {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'text-sm text-gray-300 flex items-center justify-between py-1';
-            const fileInfo = document.createElement('div');
-            fileInfo.className = 'flex items-center';
-            fileInfo.innerHTML = `<i class="ri-image-line mr-2 text-secondary"></i><span>${input.files[i].name}</span>`;
-            const deleteBtn = document.createElement('button');
-            deleteBtn.type = 'button';
-            deleteBtn.className = 'text-red-500 hover:text-red-700 ml-4';
-            deleteBtn.innerHTML = '<i class="ri-close-line"></i>';
-            deleteBtn.addEventListener('click', () => {
-              removeFile(i, input.id, display.id);
-            });
-            fileItem.appendChild(fileInfo);
-            fileItem.appendChild(deleteBtn);
-            display.appendChild(fileItem);
-          }
-        }
+        Array.from(input.files).forEach((file, i) => {
+            display.innerHTML += `
+              <div class="text-sm text-gray-300 flex items-center justify-between py-1">
+                <div class="flex items-center">
+                  <i class="ri-image-line mr-2 text-secondary"></i>
+                  <span>${file.name}</span>
+                </div>
+                <button type="button" class="text-red-500 hover:text-red-700 ml-4" onclick="removeFile(${i}, '${input.id}')">
+                  <i class="ri-close-line"></i>
+                </button>
+              </div>`;
+        });
       }
       
-      fileUploadFields.forEach(field => {
-        const browseBtn = document.getElementById(field.browseBtn);
-        const input = document.getElementById(field.inputId);
-        const display = document.getElementById(field.displayId);
-        const dropZone = document.getElementById(field.dropZone);
-        browseBtn.addEventListener('click', () => input.click());
+      fileUploadFields.forEach(({ browseBtn, inputId, displayId, dropZone }) => {
+        const browse = document.getElementById(browseBtn);
+        const input = document.getElementById(inputId);
+        const display = document.getElementById(displayId);
+        const drop = document.getElementById(dropZone);
+        
+        browse.addEventListener('click', () => input.click());
         input.addEventListener('change', () => updateFileDisplay(input, display));
-        dropZone.addEventListener('dragover', (e) => {
+        
+        drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('border-secondary/50'); });
+        drop.addEventListener('dragleave', () => drop.classList.remove('border-secondary/50'));
+        drop.addEventListener('drop', e => {
           e.preventDefault();
-          dropZone.classList.add('border-secondary/50');
-        });
-        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-secondary/50'));
-        dropZone.addEventListener('drop', (e) => {
-          e.preventDefault();
-          dropZone.classList.remove('border-secondary/50');
+          drop.classList.remove('border-secondary/50');
           if (e.dataTransfer.files.length) {
             input.files = e.dataTransfer.files;
             input.dispatchEvent(new Event('change'));
@@ -371,105 +623,69 @@
         });
       });
       
-      // Preview button handler
+      const previewBtn = document.getElementById('previewBtn');
+      const previewSection = document.getElementById('previewSection');
+      const previewFrame = document.getElementById('previewFrame');
+      const successModal = document.getElementById('successModal');
+      const downloadButton = document.getElementById('downloadButton');
+      const viewReportBtn = document.getElementById('viewReportBtn');
+      const closeModal = document.getElementById('closeModal');
+      
+      function validateForm() {
+        return form.checkValidity();
+      }
+
       previewBtn.addEventListener('click', async () => {
-        if (summaryEditor && outcomeEditor) {
-            await Promise.all([summaryEditor.updateSourceElement(), outcomeEditor.updateSourceElement()]);
+        if (summaryEditor) summaryEditor.updateSourceElement();
+        if (outcomeEditor) outcomeEditor.updateSourceElement();
+        if (!validateForm()) {
+            form.reportValidity();
+            return;
         }
-        if (!validateForm()) return;
         
         const formData = new FormData(form);
         previewSection.classList.remove('hidden');
-        
         try {
-            const response = await fetch('/preview_report', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await fetch('/preview_report', { method: 'POST', body: formData });
             if (!response.ok) throw new Error('Preview failed');
-            const html = await response.text();
-            previewFrame.srcdoc = html;
+            previewFrame.srcdoc = await response.text();
         } catch (error) {
             console.error('Preview error:', error);
-            updateSimplePreview();
         }
         previewSection.scrollIntoView({ behavior: 'smooth' });
-    });
-      
-      function validateForm() {
-        const requiredFields = form.querySelectorAll('[required]');
-        let isValid = true;
-        requiredFields.forEach(field => {
-          if (!field.value.trim()) {
-            field.classList.add('border-red-500');
-            isValid = false;
-          } else {
-            field.classList.remove('border-red-500');
-          }
-        });
-        return isValid;
-      }
-      
-      function updateSimplePreview() {
-        const previewContent = document.getElementById('previewContent');
-        const formData = new FormData(form);
-        let previewHTML = '<h3 class="text-lg font-semibold mb-4">Form Data Summary</h3>';
-        formData.forEach((value, key) => {
-          if (value && !key.includes('[]') && key !== 'invitePoster' && key !== 'actionPhotos' && key !== 'attendanceSheet' && key !== 'analysisReport') {
-            previewHTML += `
-              <div class="border-b border-gray-700 pb-2">
-                <span class="text-gray-400">${key}:</span>
-                <span class="ml-2">${value}</span>
-              </div>
-            `;
-          }
-        });
-        fileUploadFields.forEach(field => {
-          const input = document.getElementById(field.inputId);
-          if (input.files.length > 0) {
-            previewHTML += `
-              <div class="border-b border-gray-700 pb-2">
-                <span class="text-gray-400">${field.inputId}:</span>
-                <span class="ml-2">${input.files.length} file(s) selected</span>
-              </div>
-            `;
-          }
-        });
-        previewContent.innerHTML = previewHTML;
-      }
-      
+      });
+
       form.addEventListener('submit', async (e) => {
         e.preventDefault();
-        if (summaryEditor && outcomeEditor) {
-            await Promise.all([summaryEditor.updateSourceElement(), outcomeEditor.updateSourceElement()]);
+        if (summaryEditor) summaryEditor.updateSourceElement();
+        if (outcomeEditor) outcomeEditor.updateSourceElement();
+        if (!validateForm()) {
+            form.reportValidity();
+            return;
         }
-        if (!validateForm()) return;
 
         const submitBtn = form.querySelector('button[type="submit"]');
+        const originalBtnText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="ri-loader-2-line animate-spin mr-2"></i>Processing...';
         submitBtn.disabled = true;
 
         try {
             const formData = new FormData(form);
-            const response = await fetch('/generate_report', {
-                method: 'POST',
-                body: formData
-            });
+            const response = await fetch('/generate_report', { method: 'POST', body: formData });
             const data = await response.json();
             
-            if(data.error) throw new Error(data.error);
+            if (response.status !== 200 || data.error) throw new Error(data.error || 'Error generating report');
             
-            // Set download URL correctly
             downloadButton.href = data.download_url;
             downloadButton.download = data.filename;
             successModal.classList.remove('hidden');
         } catch (error) {
-            alert(error.message || 'Error generating report');
+            alert(error.message);
         } finally {
-            submitBtn.innerHTML = 'Generate Report';
+            submitBtn.innerHTML = originalBtnText;
             submitBtn.disabled = false;
         }
-    });
+      });
       
       closeModal.addEventListener('click', () => successModal.classList.add('hidden'));
       viewReportBtn.addEventListener('click', () => {
@@ -477,6 +693,7 @@
         previewSection.classList.remove('hidden');
         previewSection.scrollIntoView({ behavior: 'smooth' });
       });
+
     });
   </script>
 </body>
