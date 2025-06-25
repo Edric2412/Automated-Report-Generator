@@ -1,4 +1,4 @@
-<!-- index.html (Updated with Advanced Geotag Overlay) -->
+<!-- index.html (Updated with Mobile Camera Enhancements) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -163,24 +163,28 @@
               <div id="selectedFiles1" class="mt-4 text-left"></div>
             </div>
           </div>
+
           <div class="space-y-2 mt-6">
-            <!-- Modified Action Photos label with Take Photo button -->
-            <div class="flex items-center justify-between">
-              <label class="block text-sm font-medium">Upload Action Photos</label>
-              <button type="button" id="takePhotoBtn" class="text-sm px-4 py-1.5 border border-secondary text-secondary hover:bg-secondary/20 rounded-button transition-colors duration-300">
-                <i class="ri-camera-line mr-1"></i> Take Photo
-              </button>
-            </div>
+            <label class="block text-sm font-medium">Upload Action Photos</label>
             <div id="actionPhotosUpload" class="upload-zone border-2 border-dashed border-gray-700/50 rounded-2xl p-8 text-center bg-gray-800/20 hover:bg-gray-800/30 transition-all duration-300 group">
               <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center">
                 <i class="ri-upload-cloud-line ri-3x text-gray-400 transition-all duration-300 group-hover:text-secondary group-hover:scale-110"></i>
               </div>
-              <p class="text-sm text-gray-300 mb-3">Drag and drop your action photos here or</p>
-              <button type="button" id="browseFiles2" class="text-secondary hover:text-white font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">Browse Files</button>
+              <p class="text-sm text-gray-300 mb-3">Drag and drop photos here or select from your device</p>
+              <!-- MODIFIED: Buttons are now inside the drop zone -->
+              <div class="flex justify-center items-center space-x-4">
+                <button type="button" id="browseFiles2" class="text-secondary hover:text-white font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">
+                  <i class="ri-folder-open-line mr-1"></i> Browse Files
+                </button>
+                <button type="button" id="takePhotoBtn" class="text-secondary hover:text-white font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">
+                  <i class="ri-camera-line mr-1"></i> Take Photo
+                </button>
+              </div>
               <input type="file" id="actionPhotos" name="actionPhotos" class="hidden" accept="image/*" multiple>
               <div id="selectedFiles2" class="mt-4 text-left"></div>
             </div>
           </div>
+
           <div class="space-y-2 mt-6">
             <label class="block text-sm font-medium">Upload Attendance Sheet</label>
             <div id="attendanceSheetUpload" class="upload-zone border-2 border-dashed border-gray-700/50 rounded-2xl p-8 text-center bg-gray-800/20 hover:bg-gray-800/30 transition-all duration-300 group">
@@ -248,14 +252,23 @@
   <!-- Camera Modal -->
   <div id="cameraModal" class="fixed inset-0 flex items-center justify-center hidden z-50">
     <div class="absolute inset-0 bg-black bg-opacity-75" id="cameraModalOverlay"></div>
-    <div class="glass-effect rounded-2xl p-6 max-w-2xl w-full mx-4 relative z-10 text-center">
+    <div class="glass-effect rounded-2xl p-6 max-w-3xl w-full mx-4 relative z-10 text-center">
         <h3 class="text-xl font-bold mb-4">Take Action Photo</h3>
         <div id="cameraView" class="relative">
-            <video id="cameraFeed" class="w-full h-auto rounded-lg" autoplay playsinline></video>
-            <p id="cameraError" class="text-red-400 mt-2 hidden">Could not access camera. Please check permissions.</p>
-            <button id="captureBtn" class="mt-4 px-8 py-2.5 border border-secondary bg-secondary hover:bg-secondary-dark text-white rounded-button transition-colors duration-300">
-                <i class="ri-camera-fill mr-2"></i>Capture
-            </button>
+            <video id="cameraFeed" class="w-full h-auto rounded-lg bg-gray-900" autoplay playsinline></video>
+            <!-- MODIFIED: Better error message -->
+            <p id="cameraError" class="text-red-400 mt-2 hidden">
+              <b>Camera access denied.</b><br>Please go to your browser's settings and grant camera permissions for this site to use this feature.
+            </p>
+            <div class="mt-4 flex justify-center items-center space-x-4">
+              <button id="captureBtn" class="px-8 py-2.5 border border-secondary bg-secondary hover:bg-secondary-dark text-white rounded-full transition-colors duration-300 text-2xl">
+                  <i class="ri-camera-fill"></i>
+              </button>
+              <!-- MODIFIED: Switch camera button -->
+              <button id="switchCameraBtn" class="absolute right-4 bottom-4 p-2 bg-black/50 text-white rounded-full hidden hover:bg-black/75">
+                  <i class="ri-camera-switch-line ri-lg"></i>
+              </button>
+            </div>
         </div>
         <div id="previewView" class="hidden relative">
             <canvas id="photoCanvas" class="w-full h-auto rounded-lg"></canvas>
@@ -368,16 +381,17 @@
       }, 1000);
       
 
-      // --- Camera Capture Logic with Advanced Overlay ---
+      // --- Camera Capture Logic with Advanced Overlay & Controls ---
       const cameraModal = document.getElementById('cameraModal');
-      const cameraModalOverlay = document.getElementById('cameraModalOverlay');
       const takePhotoBtn = document.getElementById('takePhotoBtn');
       const closeCameraModalBtn = document.getElementById('closeCameraModal');
+      const cameraModalOverlay = document.getElementById('cameraModalOverlay');
       const cameraView = document.getElementById('cameraView');
       const previewView = document.getElementById('previewView');
       const cameraFeed = document.getElementById('cameraFeed');
       const cameraError = document.getElementById('cameraError');
       const captureBtn = document.getElementById('captureBtn');
+      const switchCameraBtn = document.getElementById('switchCameraBtn');
       const retakeBtn = document.getElementById('retakeBtn');
       const saveBtn = document.getElementById('saveBtn');
       const saveBtnSpinner = saveBtn.querySelector('i');
@@ -385,30 +399,67 @@
       const geoStatus = document.getElementById('geoStatus');
       const actionPhotosInput = document.getElementById('actionPhotos');
       let stream;
+      let videoDevices = [];
+      let currentDeviceIndex = 0;
 
       const stopCamera = () => {
           if (stream) { stream.getTracks().forEach(track => track.stop()); }
           stream = null;
       };
 
+      const startCamera = async (deviceId) => {
+          stopCamera(); // Stop any existing stream
+          const constraints = {
+              video: {
+                  // If a specific deviceId is provided, use it.
+                  // Otherwise, prefer the rear camera ('environment').
+                  deviceId: deviceId ? { exact: deviceId } : undefined,
+                  facingMode: deviceId ? undefined : { ideal: 'environment' }
+              }
+          };
+
+          try {
+              stream = await navigator.mediaDevices.getUserMedia(constraints);
+              cameraFeed.srcObject = stream;
+              cameraError.classList.add('hidden');
+          } catch (err) {
+              console.error("Error starting camera:", err);
+              cameraError.classList.remove('hidden');
+              stopCamera();
+          }
+      };
+      
+      // Open Camera Modal
       takePhotoBtn.addEventListener('click', async () => {
           cameraModal.classList.remove('hidden');
           cameraView.classList.remove('hidden');
           previewView.classList.add('hidden');
-          cameraError.classList.add('hidden');
           
+          // Get list of available video devices (cameras)
           try {
-              stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-              cameraFeed.srcObject = stream;
-          } catch (err) {
-              console.error("Camera access error:", err);
-              try {
-                stream = await navigator.mediaDevices.getUserMedia({ video: true });
-                cameraFeed.srcObject = stream;
-              } catch (fallbackErr) {
-                cameraError.classList.remove('hidden');
-                stopCamera();
+              const devices = await navigator.mediaDevices.enumerateDevices();
+              videoDevices = devices.filter(device => device.kind === 'videoinput');
+              
+              if (videoDevices.length > 1) {
+                  switchCameraBtn.classList.remove('hidden');
+                  currentDeviceIndex = 0; // Reset to the first camera
+              } else {
+                  switchCameraBtn.classList.add('hidden');
               }
+              // Start the camera with the default or first device
+              await startCamera(videoDevices.length > 0 ? videoDevices[currentDeviceIndex].deviceId : undefined);
+          } catch (err) {
+              console.error("Could not enumerate devices:", err);
+              cameraError.classList.remove('hidden');
+          }
+      });
+      
+      // Switch Camera Button
+      switchCameraBtn.addEventListener('click', () => {
+          if (videoDevices.length > 1) {
+              // Cycle to the next camera in the list
+              currentDeviceIndex = (currentDeviceIndex + 1) % videoDevices.length;
+              startCamera(videoDevices[currentDeviceIndex].deviceId);
           }
       });
       
@@ -421,12 +472,19 @@
       cameraModalOverlay.addEventListener('click', closeCamera);
       
       captureBtn.addEventListener('click', () => {
+          // This logic ensures that capture dimensions respect the device's current orientation (landscape/portrait)
+          // because videoWidth/videoHeight update automatically when the stream's orientation changes.
+          if (!stream || !cameraFeed.videoWidth) {
+              alert('Camera not ready. Please wait a moment.');
+              return;
+          }
+
           cameraView.classList.add('hidden');
           previewView.classList.remove('hidden');
           saveBtn.disabled = true;
           saveBtnSpinner.classList.remove('hidden');
           geoStatus.textContent = 'Fetching location...';
-
+          
           const context = photoCanvas.getContext('2d');
           photoCanvas.width = cameraFeed.videoWidth;
           photoCanvas.height = cameraFeed.videoHeight;
@@ -435,16 +493,13 @@
 
           navigator.geolocation.getCurrentPosition(
               (pos) => {
-                  const { latitude, longitude } = pos.coords;
-                  const timestamp = new Date();
-                  fetchAddress(latitude, longitude, timestamp);
+                  fetchAddress(pos.coords.latitude, pos.coords.longitude, new Date());
               },
               (err) => {
                   console.warn(`Geolocation error: ${err.message}`);
-                  const timestamp = new Date();
-                  drawOverlay({ timestamp }); // Call with only timestamp
+                  drawOverlay({ timestamp: new Date() });
                   geoStatus.textContent = 'Could not get location. Address will be missing.';
-                  geoStatus.classList.remove('text-green-400', 'text-yellow-400');
+                  geoStatus.classList.replace('text-yellow-400', 'text-green-400');
                   geoStatus.classList.add('text-red-400');
                   saveBtn.disabled = false;
                   saveBtnSpinner.classList.add('hidden');
@@ -455,7 +510,7 @@
       
       const fetchAddress = async (lat, lon, timestamp) => {
         geoStatus.textContent = 'Location found. Fetching address...';
-        geoStatus.classList.remove('text-green-400', 'text-red-400');
+        geoStatus.classList.replace('text-green-400', 'text-red-400');
         geoStatus.classList.add('text-yellow-400');
         const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lon}`;
         let locationData = { lat, lon, timestamp };
@@ -463,11 +518,9 @@
         try {
             const response = await fetch(url, { headers: { 'User-Agent': 'EventReportGenerator/1.0' } });
             if (!response.ok) throw new Error('Nominatim API request failed');
-            
             const data = await response.json();
             if (data && data.address) {
                 locationData.address = data.address;
-                locationData.displayName = data.display_name;
                 geoStatus.textContent = 'Address found!';
                 geoStatus.classList.replace('text-yellow-400', 'text-green-400');
             } else {
@@ -486,9 +539,7 @@
       const drawOverlay = (data) => {
           const context = photoCanvas.getContext('2d');
           const { width, height } = photoCanvas;
-          
-          // Define layout constants
-          const boxHeight = height * 0.20; // 20% of image height
+          const boxHeight = height * 0.20;
           const boxY = height - boxHeight;
           const padding = boxHeight * 0.1;
           const iconSize = boxHeight * 0.35;
@@ -496,14 +547,12 @@
           const iconY = boxY + padding;
           const textBlockX = iconX + iconSize + padding;
 
-          // 1. Draw semi-transparent background
           context.fillStyle = 'rgba(0, 0, 0, 0.65)';
           context.fillRect(0, boxY, width, boxHeight);
           
-          // 2. Draw map marker icon (as a simplified shape)
-          context.fillStyle = '#ea4335'; // Google red
+          context.fillStyle = '#ea4335';
           context.beginPath();
-          context.moveTo(iconX + iconSize / 2, iconY + iconSize); // Bottom point
+          context.moveTo(iconX + iconSize / 2, iconY + iconSize);
           context.bezierCurveTo(iconX, iconY + iconSize / 1.5, iconX, iconY, iconX + iconSize / 2, iconY);
           context.bezierCurveTo(iconX + iconSize, iconY, iconX + iconSize, iconY + iconSize / 1.5, iconX + iconSize / 2, iconY + iconSize);
           context.fill();
@@ -512,7 +561,6 @@
           context.arc(iconX + iconSize / 2, iconY + iconSize / 2.5, iconSize / 5, 0, 2 * Math.PI);
           context.fill();
 
-          // 3. Prepare and draw text lines
           context.fillStyle = 'white';
           context.textAlign = 'left';
           context.textBaseline = 'top';
@@ -523,32 +571,25 @@
           let dateLine = data.timestamp.toLocaleString('en-GB').replace(',', '');
 
           if (data.address) {
-              mainLocation = `${data.address.city || data.address.town || data.address.village || ''}, ${data.address.state || ''}, ${data.address.country || ''}`.replace(/^,|,$/g, '').trim();
-              addressLine1 = `${data.address.road || ''}, ${data.address.suburb || ''}`.replace(/^,|,$/g, '').trim();
+              mainLocation = `${data.address.city || data.address.town || data.address.village || ''}, ${data.address.state || ''}`.replace(/^, ?| ?,$/g, '').trim() || 'Major Area';
+              addressLine1 = `${data.address.road || ''}, ${data.address.suburb || ''}`.replace(/^, ?| ?,$/g, '').trim() || 'Nearby Street';
           }
 
           const lineSpacing = 4;
-          // Main Location (Bold)
           const mainFontSize = boxHeight * 0.15;
           context.font = `bold ${mainFontSize}px sans-serif`;
           let currentY = boxY + padding;
           context.fillText(mainLocation, textBlockX, currentY);
           currentY += mainFontSize + lineSpacing;
 
-          // Address Line 1
           const regularFontSize = boxHeight * 0.12;
           context.font = `${regularFontSize}px sans-serif`;
           context.fillText(addressLine1, textBlockX, currentY);
           currentY += regularFontSize + lineSpacing;
-
-          // Lat/Lon
           context.fillText(addressLine2, textBlockX, currentY);
           currentY += regularFontSize + lineSpacing;
-          
-          // Date/Time
           context.fillText(dateLine, textBlockX, currentY);
 
-          // 4. Draw a "logo"
           context.font = `italic bold ${regularFontSize}px sans-serif`;
           context.fillStyle = 'rgba(255, 255, 255, 0.8)';
           context.textAlign = 'right';
