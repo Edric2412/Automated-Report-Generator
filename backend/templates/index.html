@@ -3,27 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Event Report Generator</title><!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Event Report Generator</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet"/>
-  <link rel="stylesheet" href="/static/styles.css?v=3">
+  <link rel="stylesheet" href="/static/styles.css?v=5">
   <!-- CKEditor 5 CDN -->
   <script src="https://cdn.ckeditor.com/ckeditor5/38.1.1/classic/ckeditor.js"></script>
 </head>
 <body class="min-h-screen text-gray-800 relative overflow-x-hidden">
   <div class="animated-gradient"></div>
   <div class="fixed inset-0 bg-contain bg-no-repeat bg-center opacity-30 mix-blend-multiply" style="background-image: url('static/bg-logo.png');"></div>
-  <div class="container mx-auto px-4 py-12">
-    <div class="logo">
-      <img src="static/logo-1.png" alt="Logo" class="w-auto h-32">
+  <!-- Adjusted padding-top for container for different screen sizes -->
+  <div class="container mx-auto px-4 py-12 pt-24 md:pt-32 lg:pt-12">
+    <!-- Logo positioning changed: Relative by default, absolute on large screens -->
+    <!-- CRITICAL CHANGE: lg:w-32 lg:h-32 added to explicitly size the absolute container -->
+    <div class="logo relative block mx-auto mb-8 w-auto h-auto max-h-[100px] max-w-[200px] md:max-h-[120px] md:max-w-[250px] lg:absolute lg:top-1 lg:left-1 lg:mb-0 lg:w-32 lg:h-32">
+      <img src="static/logo-1.png" alt="Logo" class="w-full h-full object-contain">
     </div>
     <div class="max-w-4xl mx-auto">
       <div class="text-center mb-12 relative">
@@ -162,7 +160,7 @@
                 <i class="ri-upload-cloud-line ri-3x text-gray-600 transition-all duration-300 group-hover:text-secondary group-hover:scale-110"></i>
               </div>
               <p class="text-sm text-gray-600 mb-3">Drag and drop your invite poster here or</p>
-              <button type="button" id="browseFiles1" class="text-gray-800 hover:text-gray-900 font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">Browse Files</button>
+              <button type="button" id="browseFiles1" class="text-secondary hover:text-white font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">Browse Files</button>
               <input type="file" id="invitePoster" name="invitePoster" class="hidden" accept="image/*" multiple>
               <div id="selectedFiles1" class="mt-4 text-left"></div>
             </div>
@@ -177,10 +175,10 @@
               <p class="text-sm text-gray-600 mb-3">Drag and drop photos here or select from your device</p>
               <!-- MODIFIED: Buttons are now inside the drop zone -->
               <div class="flex justify-center items-center space-x-4">
-                <button type="button" id="browseFiles2" class="text-gray-800 hover:text-gray-900 font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">
+                <button type="button" id="browseFiles2" class="text-secondary hover:text-white font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">
                   <i class="ri-folder-open-line mr-1"></i> Browse Files
                 </button>
-                <button type="button" id="takePhotoBtn" class="text-gray-800 hover:text-gray-900 font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">
+                <button type="button" id="takePhotoBtn" class="text-secondary hover:text-white font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">
                   <i class="ri-camera-line mr-1"></i> Take Photo
                 </button>
               </div>
@@ -196,7 +194,7 @@
                 <i class="ri-upload-cloud-line ri-3x text-gray-600 transition-all duration-300 group-hover:text-secondary group-hover:scale-110"></i>
               </div>
               <p class="text-sm text-gray-600 mb-3">Drag and drop your attendance sheet here or</p>
-              <button type="button" id="browseFiles3" class="text-gray-800 hover:text-gray-900 font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">Browse Files</button>
+              <button type="button" id="browseFiles3" class="text-secondary hover:text-white font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">Browse Files</button>
               <input type="file" id="attendanceSheet" name="attendanceSheet" class="hidden" accept="image/*" multiple>
               <div id="selectedFiles3" class="mt-4 text-left"></div>
             </div>
@@ -208,16 +206,16 @@
                 <i class="ri-upload-cloud-line ri-3x text-gray-600 transition-all duration-300 group-hover:text-secondary group-hover:scale-110"></i>
               </div>
               <p class="text-sm text-gray-600 mb-3">Drag and drop your analysis report here or</p>
-              <button type="button" id="browseFiles4" class="text-gray-800 hover:text-gray-900 font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">Browse Files</button>
+              <button type="button" id="browseFiles4" class="text-secondary hover:text-white font-medium px-4 py-2 rounded-button border border-secondary hover:bg-secondary/20">Browse Files</button>
               <input type="file" id="analysisReport" name="analysisReport" class="hidden" accept="image/*" multiple>
               <div id="selectedFiles4" class="mt-4 text-left"></div>
             </div>
           </div>
           <div class="flex flex-col sm:flex-row sm:justify-between items-center pt-6">
-            <button type="button" id="previewBtn" class="px-6 py-2.5 border border-secondary text-gray-800 hover:bg-secondary hover:text-gray-900 rounded-button transition-colors duration-300 whitespace-nowrap mb-4 sm:mb-0">
+            <button type="button" id="previewBtn" class="px-6 py-2.5 border border-secondary text-secondary hover:bg-secondary hover:text-white rounded-button transition-colors duration-300 whitespace-nowrap mb-4 sm:mb-0">
               Preview Report
             </button>
-            <button type="submit" class="px-8 py-2.5 border border-secondary text-gray-800 bg-secondary hover:bg-secondary-dark hover:text-gray-900 rounded-button transition-colors duration-300 whitespace-nowrap">
+            <button type="submit" class="px-8 py-2.5 border border-secondary text-white bg-secondary hover:bg-secondary-dark rounded-button transition-colors duration-300 whitespace-nowrap">
               Generate Report
             </button>
           </div>
@@ -242,10 +240,10 @@
         </div>
         <h3 class="text-xl font-bold mb-2">Report Generated Successfully!</h3>
         <p class="text-gray-600 mb-6">Your report has been generated and is ready for download.</p>
-        <a id="downloadButton" href="#" class="block w-full px-8 py-2.5 border border-secondary text-gray-800 bg-secondary hover:bg-secondary-dark hover:text-gray-900 rounded-button transition-colors duration-300 whitespace-nowrap text-center">
+        <a id="downloadButton" href="#" class="block w-full px-8 py-2.5 border border-secondary text-secondary bg-secondary hover:bg-secondary-dark hover:text-white rounded-button transition-colors duration-300 whitespace-nowrap text-center">
           Download Report
         </a>
-        <button id="viewReportBtn" class="w-full mt-4 px-6 py-2.5 border border-secondary text-gray-800 hover:bg-secondary/20 hover:text-gray-900 rounded-button transition-colors duration-300 whitespace-nowrap">
+        <button id="viewReportBtn" class="w-full mt-4 px-6 py-2.5 border border-secondary text-secondary hover:bg-secondary/20 hover:text-white rounded-button transition-colors duration-300 whitespace-nowrap">
           View Report
         </button>
         <button id="closeModal" class="mt-4 text-gray-600 hover:text-gray-900">Close</button>
