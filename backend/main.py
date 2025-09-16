@@ -529,11 +529,16 @@ async def download_report(filename: str):
     sanitized_filename = os.path.basename(filename)
     if sanitized_filename != filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
-    file_path = os.path.join(OUTPUT_DIR, sanitized_filename)
-    if not os.path.exists(file_path):
+    # Normalize and check path containment
+    file_path = os.path.normpath(os.path.join(OUTPUT_DIR, sanitized_filename))
+    abs_output_dir = os.path.abspath(OUTPUT_DIR)
+    abs_file_path = os.path.abspath(file_path)
+    if not abs_file_path.startswith(abs_output_dir + os.sep):
+        raise HTTPException(status_code=400, detail="Attempt to access file outside output directory")
+    if not os.path.exists(abs_file_path):
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(
-        file_path,
+        abs_file_path,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
         filename=sanitized_filename
     )
