@@ -529,6 +529,14 @@ async def download_report(filename: str):
     sanitized_filename = os.path.basename(filename)
     if sanitized_filename != filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
+alert-autofix-1
+    file_path = os.path.normpath(os.path.join(OUTPUT_DIR, sanitized_filename))
+    output_dir_abs = os.path.abspath(OUTPUT_DIR)
+    # Ensure file_path stays strictly within the output directory
+    if not file_path.startswith(output_dir_abs + os.sep):
+        raise HTTPException(status_code=400, detail="Invalid path")
+    if not os.path.exists(file_path):
+
     # Normalize and check path containment
     file_path = os.path.normpath(os.path.join(OUTPUT_DIR, sanitized_filename))
     abs_output_dir = os.path.abspath(OUTPUT_DIR)
@@ -536,6 +544,7 @@ async def download_report(filename: str):
     if not abs_file_path.startswith(abs_output_dir + os.sep):
         raise HTTPException(status_code=400, detail="Attempt to access file outside output directory")
     if not os.path.exists(abs_file_path):
+main
         raise HTTPException(status_code=404, detail="File not found")
     return FileResponse(
         abs_file_path,
