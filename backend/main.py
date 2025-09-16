@@ -126,7 +126,7 @@ async def auto_summarize(request: SummaryRequest):
         print(error_message)
         # Check for specific blocked content error
         if "block_reason" in str(e).lower():
-             error_message = "The provided text was blocked by the safety filter. Please revise the content."
+            error_message = "The provided text was blocked by the safety filter. Please revise the content."
         raise HTTPException(status_code=500, detail=error_message)
 
 
@@ -452,7 +452,7 @@ async def generate_report(
 
         template_path = os.path.join(TEMPLATES_DIR, "workshop_template.docx")
         if not os.path.exists(template_path):
-             raise HTTPException(status_code=500, detail="Default template 'workshop_template.docx' not found.")
+                raise HTTPException(status_code=500, detail="Default template 'workshop_template.docx' not found.")
         doc = Document(template_path)
 
         replacements = {
@@ -529,23 +529,18 @@ async def download_report(filename: str):
     sanitized_filename = os.path.basename(filename)
     if sanitized_filename != filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
-alert-autofix-1
-    file_path = os.path.normpath(os.path.join(OUTPUT_DIR, sanitized_filename))
-    output_dir_abs = os.path.abspath(OUTPUT_DIR)
-    # Ensure file_path stays strictly within the output directory
-    if not file_path.startswith(output_dir_abs + os.sep):
-        raise HTTPException(status_code=400, detail="Invalid path")
-    if not os.path.exists(file_path):
 
     # Normalize and check path containment
     file_path = os.path.normpath(os.path.join(OUTPUT_DIR, sanitized_filename))
     abs_output_dir = os.path.abspath(OUTPUT_DIR)
     abs_file_path = os.path.abspath(file_path)
+
     if not abs_file_path.startswith(abs_output_dir + os.sep):
         raise HTTPException(status_code=400, detail="Attempt to access file outside output directory")
+
     if not os.path.exists(abs_file_path):
-main
         raise HTTPException(status_code=404, detail="File not found")
+
     return FileResponse(
         abs_file_path,
         media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
